@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>송장 번호 조회</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input[type="text"] { padding: 6px; margin-top: 10px; width: 200px; }
+    table, th, td { border: 1px solid #ccc; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+
+  <h2>송장 번호 조회</h2>
+
+  <input type="file" id="upload" accept=".xlsx, .xls" />
+  <br><br>
+
+  <input type="text" id="searchInput" placeholder="MIS" disabled />
+  <button id="searchBtn" disabled>검색</button>
+
+  <p id="result"></p>
+
+  <script>
+    let rowData = []; // 전체 행 데이터를 저장할 변수
+
+    document.getElementById('upload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // 데이터 저장 (첫 줄은 헤더이므로 제외)
+        rowData = jsonData.slice(1);
+
+        // 검색 활성화
+        document.getElementById('searchInput').disabled = false;
+        document.getElementById('searchBtn').disabled = false;
+
+        alert("엑셀 파일이 성공적으로 불러와졌습니다.");
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', function() {
+      const input = document.getElementById('searchInput').value.trim();
+      const resultEl = document.getElementById('result');
+
+      if (!input) {
+        resultEl.textContent = "검색어를 입력하세요.";
+        return;
+      }
+
+      const found = rowData.find(row => row[0]?.toString().trim() === input);
+
+      if (found) {
+        resultEl.textContent = `송장번호: ${found[1] ?? "(없음)"}`;
+      } else {
+        resultEl.textContent = "일치하는 항목이 없습니다.";
+      }
+    });
+  </script>
+
+</body>
+</html>
